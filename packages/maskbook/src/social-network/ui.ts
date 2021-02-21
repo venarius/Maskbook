@@ -327,7 +327,9 @@ export function activateSocialNetworkUI(): void {
                 ui.init(env, {})
                 ui.resolveLastRecognizedIdentity()
                 ui.injectPostBox()
-                ui.injectToolbar()
+                if (Flags.injected_tool_enabled) {
+                    ui.injectToolbar()
+                }
                 ui.injectSetupPrompt()
                 ui.injectPageInspector()
                 ui.collectPeople()

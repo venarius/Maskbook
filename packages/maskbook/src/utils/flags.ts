@@ -46,6 +46,7 @@ export const Flags = {
     airdrop_enabled: webOnly,
     airdrop_composition_dialog_enabled: false,
     metamask_support_enabled: webOnly,
+    injected_tool_enabled: webOnly,
     //#endregion
 
     //#region Functionality missing / broken

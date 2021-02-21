@@ -281,7 +281,7 @@
     "plugin_wallet_connect_a_wallet": "連接錢包",
     "plugin_wallet_invalid_network": "",
     "plugin_wallet_select_a_wallet": "",
-    "plugin_wallet_transaction_wait_for_confirmation": "等待交易確認…",
+    "plugin_wallet_transaction_wait_for_confirmation": "等待交易確認…\n請在您的錢包中確認交易",
     "plugin_wallet_transaction_submitted": "您的交易已提交！",
     "plugin_wallet_transaction_confirmed": "您的交易已確認！",
     "plugin_wallet_transaction_rejected": "交易被拒絕！",
