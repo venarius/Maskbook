@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { createStyles, makeStyles, Typography, Slider } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { v4 as uuid } from 'uuid'
+import { sample } from 'lodash-es'
 
 import ActionButton from '../../../extension/options-page/DashboardComponents/ActionButton'
 import { ERC20TokenDetailed, EtherTokenDetailed, EthereumTokenType } from '../../../web3/types'
@@ -26,7 +27,9 @@ import { EthereumWalletConnectedBoundary } from '../../../web3/UI/EthereumWallet
 
 const useStyles = makeStyles((theme) =>
     createStyles({
-        button: {},
+        button: {
+            marginTop: theme.spacing(1.5),
+        },
         providerBar: {},
         swapLimitWrap: {
             display: 'flex',
@@ -118,6 +121,21 @@ export function ClaimDialog(props: ClaimDialogProps) {
         claimAmount.isZero() ? '' : formatBalance(claimAmount, claimToken.decimals),
     )
 
+    //#region confirm swap dialog
+    const [, setConfirmSwapDialogOpen] = useRemoteControlledDialog(
+        EthereumMessages.events.confirmSwapDialogUpdated,
+        async (event) => {
+            if (event.open) return
+            if (!event.result) return
+            await claimCallback()
+            if (payload.token.type === EthereumTokenType.ERC20) {
+                await WalletRPC.addERC20Token(payload.token)
+                await WalletRPC.trustERC20Token(account, payload.token)
+            }
+        },
+    )
+    //#endregion
+
     //#region select token
     const [id] = useState(uuid())
     const [, setSelectTokenDialogOpen] = useRemoteControlledDialog(
@@ -190,12 +208,11 @@ export function ClaimDialog(props: ClaimDialogProps) {
         payload.is_mask,
     )
     const onClaim = useCallback(async () => {
-        await claimCallback()
-        if (payload.token.type === EthereumTokenType.ERC20) {
-            await WalletRPC.addERC20Token(payload.token)
-            await WalletRPC.trustERC20Token(account, payload.token)
-        }
-    }, [account, payload.token, claimCallback])
+        setConfirmSwapDialogOpen({
+            open: true,
+            variableIndex: sample([1, 2, 3]) ?? 'bypass',
+        })
+    }, [setConfirmSwapDialogOpen])
 
     const [_, setTransactionDialogOpen] = useRemoteControlledDialog(
         EthereumMessages.events.transactionDialogUpdated,
@@ -262,14 +279,21 @@ export function ClaimDialog(props: ClaimDialogProps) {
                 balance={tokenBalance}
                 token={claimToken}
                 onAmountChange={(value) => {
-                    setInputAmountForUI(value)
                     const val =
                         value === ''
                             ? new BigNumber(0)
                             : new BigNumber(value).multipliedBy(new BigNumber(10).pow(claimToken.decimals))
                     const isMax = value === formatBalance(new BigNumber(maxAmount), claimToken.decimals)
                     const tokenAmount = isMax ? maxSwapAmount : val.dividedBy(ratio)
-                    const swapAmount = val.dp(0)
+                    const swapAmount = isMax ? tokenAmount.multipliedBy(ratio) : val.dp(0)
+                    setInputAmountForUI(
+                        isMax
+                            ? tokenAmount
+                                  .multipliedBy(ratio)
+                                  .dividedBy(new BigNumber(10).pow(claimToken.decimals))
+                                  .toString()
+                            : value,
+                    )
                     setTokenAmount(tokenAmount.dp(0))
                     setClaimAmount(swapAmount)
                 }}
